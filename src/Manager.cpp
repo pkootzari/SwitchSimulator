@@ -17,8 +17,10 @@ void Manager::handleCommand() {
             addSystem(stoi(arguments[1]));
         else if(arguments[command_index] == ADD_SWITCH)
             addSwitch(stoi(arguments[1]), stoi(arguments[2]));
-        else
-            write(switches[0]->pipes[1], "this is your last chance!", sizeof("this is your last chance!")); // for testing pipes
+        else {
+            write(systems[0]->pipes[1], "this is your last chance!", sizeof("this is your last chance!")); // for testing pipes
+            cout << "massage sent!" << endl;
+        }
     }
 }
 
