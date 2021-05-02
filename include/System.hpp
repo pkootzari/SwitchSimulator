@@ -10,17 +10,18 @@
 #include <fcntl.h>
 #include <sys/select.h>
 
-#define MASSAGE_SIZE 128
-
 class System {
     private:
         int id;
         std::string directory;
         int input_pipe;
         int write_to_switch;
+        int MASSAGE_SIZE;
         void handleManagerCommand(int read_fd_pipe);
         void handleInputFrame(int input_pipe);
+        void initiatePipes();
     public:
+        int getID();
         System(int id);
         void run(int read_fd_pipe);
 };

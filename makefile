@@ -52,7 +52,7 @@ $(EXECUTABLE_FILE): $(OBJECTS)
 
 .PHONY: clean
 clean:
-	rm -rf $(BUILD_DIR) *.o *.out  System* Switch*
+	rm -rf $(BUILD_DIR) *.o *.out  system* switch*
 
 .PHONY: cleandir
 cleandir:

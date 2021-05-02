@@ -7,6 +7,7 @@
 #include <sstream>
 #include <iterator>
 #include <unistd.h>
+#include <map>
 
 class Switch;
 class System;
@@ -28,6 +29,9 @@ class Manager {
         std::vector<std::string> tokenizeInput(std::string input);
         void addSwitch(int numOfPorts, int id);
         void addSystem(int id);
+        void connect(int system_id, int switch_id, int port);
+        int find_system_index(int id);
+        int find_switch_index(int id);
     public:
         void handleCommand();
 };

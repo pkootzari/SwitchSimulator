@@ -18,15 +18,21 @@ constexpr int ACTIVE  = 2;
 
 class Switch {
     private:
-        int numOfPorts;
         int id;
+        int numOfPorts;
+        int MASSAGE_SIZE;
         std::string directory;
         std::vector<int> port_input_pipes;
         std::map<int, int> port_pipe_towrite;
         std::map<int, int> ports_status;
         std::map<int, int> lookup_table;
-        fd_set readFDs;
+        // fd_set readFDs;
+        void handleManagerCommand(int read_fd_pipe);
+        void handleInputFrame(int port_num, int pipe_fd);
+        void initiatePipes();
     public:
+        int getID();
+        int getNumOfPorts();
         Switch(int numOfPorts, int id);
         void run(int read_fd_pipe);
 };
