@@ -16,6 +16,6 @@ Switch::Switch(int numOfPorts, int id) {
         cout << "faild to make pipe for switch " << id << endl;
     if(mkfifo(write_dirpipe.c_str(), 0666) != 0)
         cout << "faild to make pipe for switch " << id << endl;
-    read_pipe = open(read_dirpipe.c_str(), O_RDONLY | O_NONBLOCK);
-    write_pipe = open(write_dirpipe.c_str(), O_WRONLY | O_NONBLOCK);
+    this->read_pipe = open(read_dirpipe.c_str(), O_RDONLY | O_NONBLOCK);
+    this->write_pipe = open(write_dirpipe.c_str(), O_WRONLY | O_NONBLOCK);
 }
