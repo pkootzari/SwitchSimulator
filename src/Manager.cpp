@@ -27,6 +27,7 @@ void Manager::addSwitch(int numOfPorts, int id) {
     Switch* new_switch = new Switch(numOfPorts, id);
     if(pipe(new_si->pipes) < 0)
         cout << "can't make unnamed pipes for switch " << id << endl;
+    new_si->sw = new_switch;
     switches.push_back(new_si);
     cout << "Switch created!\n";
     if(fork() == 0)
@@ -38,6 +39,7 @@ void Manager::addSystem(int id) {
     System* new_system = new System(id);
     if(pipe(new_sy->pipes) < 0)
         cout << "can't make unnamed pipes for system " << id << endl;
+    new_sy->sy = new_system;
     systems.push_back(new_sy);
     cout << "System created!\n";
     if(fork() == 0)
