@@ -21,13 +21,25 @@ void Manager::handleCommand() {
 }
 
 void Manager::addSwitch(int numOfPorts, int id) {
-    switches.push_back(new Switch(numOfPorts, id));
+    SwitchInfo* new_si = new SwitchInfo;
+    Switch* new_switch = new Switch(numOfPorts, id);
+    if(pipe(new_si->pipes) < 0)
+        cout << "can't make unnamed pipes for switch " << id << endl;
+    switches.push_back(new_si);
     cout << "Switch created!\n";
+    if(fork() == 0)
+        new_switch->run();
 }
 
 void Manager::addSystem(int id) {
-    systems.push_back(new System(id));
+    SystemInfo* new_sy = new SystemInfo;
+    System* new_system = new System(id);
+    if(pipe(new_sy->pipes) < 0)
+        cout << "can't make unnamed pipes for system " << id << endl;
+    systems.push_back(new_sy);
     cout << "System created!\n";
+    if(fork() == 0)
+        new_system->run();
 }
 
 vector<string> Manager::tokenizeInput(string input) {

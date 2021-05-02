@@ -10,21 +10,21 @@
 #include <stdio.h>
 #include <fcntl.h>
 
-typedef struct port {
-    bool open;
-    int to_system_id;
-    int port_number;
-} port;
+constexpr int DISCONNECTED = 0;
+constexpr int INACTIVE = 1;
+constexpr int ACTIVE  = 2;
 
 class Switch {
     private:
         int numOfPorts;
         int id;
-        int read_pipe;
-        int write_pipe;
-        std::vector<port*> lookup;
+        std::string directory;
+        vector<int> port_pipes;
+        map<int, int> ports_status;
+        map<int, int> lookup_table;
     public:
         Switch(int numOfPorts, int id);
+        void run(int read_fd_pipe);
 };
 
 #endif
