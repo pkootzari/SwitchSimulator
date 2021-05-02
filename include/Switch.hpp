@@ -23,6 +23,7 @@ class Switch {
         std::vector<int> port_pipes;
         std::map<int, int> ports_status;
         std::map<int, int> lookup_table;
+        fd_set readFDs;
     public:
         Switch(int numOfPorts, int id);
         void run(int read_fd_pipe);
