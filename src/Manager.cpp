@@ -28,7 +28,7 @@ void Manager::addSwitch(int numOfPorts, int id) {
     switches.push_back(new_si);
     cout << "Switch created!\n";
     if(fork() == 0)
-        new_switch->run();
+        new_switch->run(2);
 }
 
 void Manager::addSystem(int id) {
@@ -39,7 +39,7 @@ void Manager::addSystem(int id) {
     systems.push_back(new_sy);
     cout << "System created!\n";
     if(fork() == 0)
-        new_system->run();
+        new_system->run(new_sy->pipes[0]);
 }
 
 vector<string> Manager::tokenizeInput(string input) {

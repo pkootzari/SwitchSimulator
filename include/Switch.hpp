@@ -19,9 +19,9 @@ class Switch {
         int numOfPorts;
         int id;
         std::string directory;
-        vector<int> port_pipes;
-        map<int, int> ports_status;
-        map<int, int> lookup_table;
+        std::vector<int> port_pipes;
+        std::map<int, int> ports_status;
+        std::map<int, int> lookup_table;
     public:
         Switch(int numOfPorts, int id);
         void run(int read_fd_pipe);
