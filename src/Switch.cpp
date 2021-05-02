@@ -21,5 +21,8 @@ Switch::Switch(int numOfPorts, int id) {
 }
 
 void Switch::run(int read_fd_pipe) {
-
+    // testing pipes
+    char massage[256];
+    read(read_fd_pipe, massage, 256);
+    cout << "from switch: " << massage << endl;
 }

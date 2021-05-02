@@ -8,6 +8,7 @@
 #include <vector>
 #include <map>
 #include <stdio.h>
+#include <unistd.h>
 #include <fcntl.h>
 
 constexpr int DISCONNECTED = 0;

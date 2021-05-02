@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include <stdio.h>
+#include <unistd.h>
 #include <fcntl.h>
 
 class System {

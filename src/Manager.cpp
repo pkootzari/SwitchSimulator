@@ -17,6 +17,8 @@ void Manager::handleCommand() {
             addSystem(stoi(arguments[1]));
         else if(arguments[command_index] == ADD_SWITCH)
             addSwitch(stoi(arguments[1]), stoi(arguments[2]));
+        else
+            write(switches[0]->pipes[1], "this is your last chance!", sizeof("this is your last chance!")); // for testing pipes
     }
 }
 
@@ -28,7 +30,7 @@ void Manager::addSwitch(int numOfPorts, int id) {
     switches.push_back(new_si);
     cout << "Switch created!\n";
     if(fork() == 0)
-        new_switch->run(2);
+        new_switch->run(new_si->pipes[0]);
 }
 
 void Manager::addSystem(int id) {
