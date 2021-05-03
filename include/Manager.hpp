@@ -32,6 +32,7 @@ class Manager {
         void connect(int system_id, int switch_id, int port);
         int find_system_index(int id);
         int find_switch_index(int id);
+        void ping(int from, int to);
     public:
         void handleCommand();
 };

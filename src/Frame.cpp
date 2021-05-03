@@ -19,7 +19,9 @@ Frame::Frame(string massage) {
     this->from      = stoi(arguments[0]);
     this->to        = stoi(arguments[1]);
     this->type      = stoi(arguments[2]);
-    this->content   = arguments[3];
+    string in = arguments[3];
+    string out = in.substr(0, in.find('#'));
+    this->content   = out;
 }
 
 vector<string> Frame::splitString(string s) {
@@ -55,8 +57,11 @@ string Frame::toString() {
     string to = (this->to > 9) ? to_string(this->to) : "0"+to_string(this->to);
     string from = (this->from > 9) ? to_string(this->from) : "0"+to_string(this->from);
     string type = to_string(this->type);
+    string c = content;
+    while(c.length()!= Frame::max_sizeof_content)
+        c += "#";
 
-    return string(to + " " + from + " " + type + " " + content);
+    return string(from + " " + to + " " + type + " " + c);
 }
 
 vector<string> Frame::tokenizeInput(string input) {

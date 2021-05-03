@@ -3,11 +3,12 @@
 
 using namespace std;
 
-constexpr char CONNECT[] = "connect"; 
+constexpr char CONNECT[] = "connect";
+constexpr char PING[] = "ping";
 
 
 System::System(int id) {
-    this->MASSAGE_SIZE = 128;
+    this->MASSAGE_SIZE = 59;
     this->id = id;
     this->directory = "system" + to_string(id);
     this->write_to_switch = 0;
@@ -68,10 +69,12 @@ void System::handleManagerCommand(int read_fd_pipe) {
             return;
         }
         this->write_to_switch = write_fd;
-        
         this->log << "system connect to: " << this->write_to_switch << endl;
 
-        write(this->write_to_switch, "I'm fine thanks!", sizeof("I'm fine thanks!"));   // testing the pipes
+    } else if(arguments[0] == PING) {
+        int to_id = stoi(arguments[1]);
+        Frame f = Frame(id, to_id, MASSAGE, "pinging");
+        write(this->write_to_switch, f.toString().c_str(), f.toString().length()+1);
     }
 
 }
@@ -79,7 +82,13 @@ void System::handleManagerCommand(int read_fd_pipe) {
 void System::handleInputFrame(int input_pipe) {
     char massage[MASSAGE_SIZE];
     read(input_pipe, massage, MASSAGE_SIZE);
+    Frame incomming_frame = Frame(string(massage));
     this->log << "incoming frame for system " << id << " : " << massage << endl;
+
+    if(incomming_frame.getType() == MASSAGE && incomming_frame.getTo() == id) {
+        Frame response = Frame(id, incomming_frame.getFrom(), MASSAGE_CNF, "pinging back");
+        write(this->write_to_switch, response.toString().c_str(), response.toString().length()+1);
+    }
 }
 
 vector<string> System::tokenizeInput(string input) {

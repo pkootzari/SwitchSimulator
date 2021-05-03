@@ -9,10 +9,11 @@
 #include <fstream>
 
 constexpr int MASSAGE = 1;
-constexpr int FILE_C = 2;
-constexpr int FILE_E = 3;
-constexpr int REQ = 4;
-constexpr int STP = 5;
+constexpr int MASSAGE_CNF = 2;
+constexpr int FILE_C = 3;
+constexpr int FILE_E = 4;
+constexpr int REQ = 5;
+constexpr int STP = 6;
 
 class Frame {
     private:

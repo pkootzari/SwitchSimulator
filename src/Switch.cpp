@@ -6,7 +6,7 @@ using namespace std;
 constexpr char CONNECT[] = "connect";
 
 Switch::Switch(int numOfPorts, int id) {
-    this->MASSAGE_SIZE = 128;
+    this->MASSAGE_SIZE = 59;
     this->id = id;
     this->numOfPorts = numOfPorts;
     this->directory = "switch" + to_string(id);
@@ -82,6 +82,12 @@ void Switch::printPortStatus(int port) {
     this->log <<"\toutput: " << this->ports[port]->output_pipe_fd << endl;
 }
 
+void Switch::printLookuptable() {
+    this->log << "Lookup Table:" << endl;
+    for(auto it = lookup_table.begin(); it != lookup_table.end(); it++)
+        this->log << "\t" << it->first << "\t" << it->second << endl;
+}
+
 void Switch::handleManagerCommand(int read_fd_pipe) {
     char massage[MASSAGE_SIZE];
     read(read_fd_pipe, massage, MASSAGE_SIZE);
@@ -99,14 +105,33 @@ void Switch::handleManagerCommand(int read_fd_pipe) {
         this->ports[port]->status = ACTIVE;
 
         printPortStatus(port);
-        write(this->ports[port]->output_pipe_fd, "how are you today!", sizeof("how are you today!")); // testign the pipes
     }
 }
 
 void Switch::handleInputFrame(int port_num, int pipe_fd) {
     char massage[MASSAGE_SIZE];
     read(pipe_fd, massage, MASSAGE_SIZE);
+    Frame incomming_frame = Frame(string(massage));
     this->log << "incoming frame for switch " << id << " : " << massage << endl;
+
+    int from_id = incomming_frame.getFrom();
+    if(lookup_table.find(from_id) == lookup_table.end()) {  // the from_id not in lookup table
+        lookup_table[from_id] = port_num;
+        printLookuptable();
+    }
+
+    int to_id = incomming_frame.getTo();
+    if(lookup_table.find(to_id) == lookup_table.end()) {    // the to_id is not in lookup table
+        for(int i = 0; i < numOfPorts; i++) {
+            if(this->ports[i]->status == ACTIVE && i != port_num)
+                write(this->ports[i]->output_pipe_fd, massage, MASSAGE_SIZE);
+        }
+
+    } else {
+        int port = lookup_table.find(to_id)->second;
+        if(this->ports[port]->status == ACTIVE)
+            write(this->ports[port]->output_pipe_fd, massage, MASSAGE_SIZE);
+    }
 }
 
 vector<string> Switch::tokenizeInput(string input) {

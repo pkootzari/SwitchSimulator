@@ -15,4 +15,7 @@ settings.json
 system*
 switch*
 
+#input output files
+*.txt 
+
 build/

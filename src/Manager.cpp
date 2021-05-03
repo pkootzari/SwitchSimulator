@@ -7,12 +7,12 @@ using namespace std;
 constexpr char ADD_SYSTEM[] = "MySystem";
 constexpr char ADD_SWITCH[] = "MySwitch";
 constexpr char CONNECT[] = "connect";
+constexpr char PING[] = "ping";
 
 void Manager::handleCommand() {
     string command;
     const int command_index = 0;
     while (getline(cin, command)) {
-        sleep(0.5);
         vector<string> arguments = tokenizeInput(command);
 
         if(arguments[command_index] == ADD_SYSTEM) {
@@ -33,11 +33,19 @@ void Manager::handleCommand() {
                 continue;
             }
             connect(stoi(arguments[1]), stoi(arguments[2]), stoi(arguments[3]));
+        } else if(arguments[command_index] == PING) {
+            if(arguments.size() != 3) {
+                cout << "too few or too many arguments!\n";
+                continue;
+            }
+            ping(stoi(arguments[1]), stoi(arguments[2]));
         } else {
             cout << "Unknown command!" << endl;
-            // write(systems[0]->pipes[1], "this is your last chance!", sizeof("this is your last chance!")); // for testing pipes
         }
+
+        sleep(2);
     }
+    sleep(5);
 }
 
 void Manager::addSwitch(int numOfPorts, int id) {
@@ -109,8 +117,18 @@ void Manager::connect(int system_id, int switch_id, int port) {
     string msg_to_system = "connect " + switch_pipe;
     string msg_to_switch = "connect " + to_string(port) + " " + system_pipe;
 
-    write(systems[find_system_index(system_id)]->pipes[1], msg_to_system.c_str(), sizeof(msg_to_switch)+1);
-    write(switches[find_switch_index(switch_id)]->pipes[1], msg_to_switch.c_str(), sizeof(msg_to_switch)+1);
+    write(systems[find_system_index(system_id)]->pipes[1], msg_to_system.c_str(), msg_to_switch.length()+1);
+    write(switches[find_switch_index(switch_id)]->pipes[1], msg_to_switch.c_str(), msg_to_switch.length()+1);
+}
+
+void Manager::ping(int from, int to) {
+    if((find_system_index(from) == -1) || (find_system_index(to) == -1)) {
+        cout << "system with this id doesn't exists!\n";
+        return;
+    }
+
+    string command = "ping " + to_string(to);
+    write(systems[find_system_index(from)]->pipes[1], command.c_str(), command.length()+1);
 }
 
 vector<string> Manager::tokenizeInput(string input) {

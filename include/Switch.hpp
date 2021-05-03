@@ -19,7 +19,9 @@ constexpr int DISCONNECTED = 0;
 constexpr int INACTIVE = 1;
 constexpr int ACTIVE  = 2;
 
-const std::string STATUS[] = {"disconnected", "inactive", "active"};
+const std::string STATUS[] = {"disconnected",   // nothing is connected to this port
+                              "inactive",       // sth is connected to this port but it isn't active becuase of spaning tree algorithem
+                              "active"};        // sth is connected to this port and comminucation is active
 
 typedef struct port {
     int status;
@@ -45,6 +47,7 @@ class Switch {
         void initiatePipes();
         std::vector<std::string> tokenizeInput(std::string input);
         void printPortStatus(int port);
+        void printLookuptable();
     public:
         int getID();
         int getNumOfPorts();
