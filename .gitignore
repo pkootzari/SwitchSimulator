@@ -12,4 +12,7 @@
 settings.json
 .vscode/
 
+system*
+switch*
+
 build/

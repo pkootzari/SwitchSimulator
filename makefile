@@ -56,4 +56,4 @@ clean:
 
 .PHONY: cleandir
 cleandir:
-	rm -rf System* Switch*
+	rm -rf system* switch*

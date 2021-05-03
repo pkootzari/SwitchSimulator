@@ -2,14 +2,19 @@
 
 using namespace std;
 
+constexpr char CONNECT[] = "connect";
+
 Switch::Switch(int numOfPorts, int id) {
     this->MASSAGE_SIZE = 128;
     this->id = id;
     this->numOfPorts = numOfPorts;
     this->directory = "switch" + to_string(id);
     for(int i = 0; i < numOfPorts; i++) {
-        this->ports_status.insert({ i, DISCONNECTED });
-        this->port_pipe_towrite.insert( {i, 0} ); // there is nowhere to send data for each port
+        Port* p = new Port;
+        p->status = DISCONNECTED;
+        p->input_pipe_fd = -1;
+        p->output_pipe_fd = -1;
+        this->ports[i] = p;
     }
 }
 
@@ -21,15 +26,18 @@ void Switch::initiatePipes() {
     if(mkdir(directory.c_str(), 0777) == -1)
         cout << "Switch " << id << " can't make its directory!\n";
     
+    this->log.open(directory+"/log.txt", std::ios_base::app);
+
     for(int i = 0; i < numOfPorts; i++) {
         string pipe_name = directory + "/port" + to_string(i);
         if(mkfifo(pipe_name.c_str(), 0666) != 0)
             cout << "failed to make pipe for switch " << id << endl;
-        int temp;
-        if ((temp = open(pipe_name.c_str(), O_RDONLY | O_NONBLOCK)) < 0)
+        int temp = open(pipe_name.c_str(), O_RDONLY | O_NONBLOCK);
+        if (temp < 0)
             cout << "faild to open the pipe for switch " << id << endl; 
-        cout << "switch " << id << " opened: " << temp << endl;
-        this->port_input_pipes.push_back(temp);
+        this->ports[i]->input_pipe_fd = temp;
+
+        this->log << "switch " << id << " opened: " << this->ports[i]->input_pipe_fd << endl;
     }
 }
 
@@ -42,9 +50,9 @@ void Switch::run(int read_fd_pipe) {
         FD_ZERO(&inputs);
         FD_SET(read_fd_pipe, &inputs);
         for(int i = 0; i < numOfPorts; i++){
-            FD_SET(this->port_input_pipes[i], &inputs);
-            if(this->port_input_pipes[i] > max_fd)
-                max_fd = this->port_input_pipes[i];
+            FD_SET(this->ports[i]->input_pipe_fd, &inputs);
+            if(this->ports[i]->input_pipe_fd > max_fd)
+                max_fd = this->ports[i]->input_pipe_fd;
         }
         if(select(1000, &inputs, NULL, NULL, NULL) < 0)
             cout<<"select error in switch " << id <<endl;
@@ -53,8 +61,8 @@ void Switch::run(int read_fd_pipe) {
             handleManagerCommand(read_fd_pipe);
         } else {
             for(int i = 0; i < numOfPorts; i++) {
-                if(FD_ISSET(this->port_input_pipes[i], &inputs)) {
-                    handleInputFrame(i, this->port_input_pipes[i]);
+                if(FD_ISSET(this->ports[i]->input_pipe_fd, &inputs)) {
+                    handleInputFrame(i, this->ports[i]->input_pipe_fd);
                 }
             }
         }
@@ -64,11 +72,31 @@ void Switch::run(int read_fd_pipe) {
 void Switch::handleManagerCommand(int read_fd_pipe) {
     char massage[MASSAGE_SIZE];
     read(read_fd_pipe, massage, MASSAGE_SIZE);
-    cout << "for switch " << id << " : " << massage << endl;
+    this->log << "for switch " << id << " : " << massage << endl;
+
+    vector<string> arguments = tokenizeInput(string(massage));
+    if(arguments[0] == CONNECT) {
+        int port = stoi(arguments[1]);
+        int write_fd = open(arguments[2].c_str(), O_WRONLY | O_NONBLOCK);
+        if(write_fd < 0) {
+            cout << "switch " << id << " can't open pipe to write to!\n";
+            return;
+        }
+        this->ports[port]->output_pipe_fd = write_fd;
+        this->ports[port]->status = ACTIVE;
+
+        write(this->ports[port]->output_pipe_fd, "how are you today!", sizeof("how are you today!")); // testign the pipes
+    }
 }
 
 void Switch::handleInputFrame(int port_num, int pipe_fd) {
     char massage[MASSAGE_SIZE];
     read(pipe_fd, massage, MASSAGE_SIZE);
-    cout << "incoming frame for system " << id << " : " << massage << endl;
+    this->log << "incoming frame for switch " << id << " : " << massage << endl;
+}
+
+vector<string> Switch::tokenizeInput(string input) {
+    stringstream inputStringStream(input);
+    return vector<string>(istream_iterator<string>(inputStringStream),
+                          istream_iterator<string>());
 }
