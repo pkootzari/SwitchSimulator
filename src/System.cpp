@@ -1,4 +1,5 @@
 #include "System.hpp"
+#include "Frame.hpp"
 
 using namespace std;
 
@@ -67,6 +68,8 @@ void System::handleManagerCommand(int read_fd_pipe) {
             return;
         }
         this->write_to_switch = write_fd;
+        
+        this->log << "system connect to: " << this->write_to_switch << endl;
 
         write(this->write_to_switch, "I'm fine thanks!", sizeof("I'm fine thanks!"));   // testing the pipes
     }

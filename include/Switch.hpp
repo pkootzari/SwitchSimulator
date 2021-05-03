@@ -19,6 +19,8 @@ constexpr int DISCONNECTED = 0;
 constexpr int INACTIVE = 1;
 constexpr int ACTIVE  = 2;
 
+const std::string STATUS[] = {"disconnected", "inactive", "active"};
+
 typedef struct port {
     int status;
     int input_pipe_fd;
@@ -42,6 +44,7 @@ class Switch {
         void handleInputFrame(int port_num, int pipe_fd);
         void initiatePipes();
         std::vector<std::string> tokenizeInput(std::string input);
+        void printPortStatus(int port);
     public:
         int getID();
         int getNumOfPorts();

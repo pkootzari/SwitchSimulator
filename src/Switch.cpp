@@ -1,4 +1,5 @@
 #include "Switch.hpp"
+#include "Frame.hpp"
 
 using namespace std;
 
@@ -69,6 +70,18 @@ void Switch::run(int read_fd_pipe) {
     }
 }
 
+void Switch::printPortStatus(int port) {
+    if(port >= numOfPorts) {
+        this->log << "port " << port << " doesn't exists!\n";
+        return;
+    }
+
+    this->log << "Port " << port << " status " << endl;
+    this->log <<"\tstatus: " << STATUS[this->ports[port]->status] << endl;
+    this->log <<"\tinput: " << this->ports[port]->input_pipe_fd << endl;
+    this->log <<"\toutput: " << this->ports[port]->output_pipe_fd << endl;
+}
+
 void Switch::handleManagerCommand(int read_fd_pipe) {
     char massage[MASSAGE_SIZE];
     read(read_fd_pipe, massage, MASSAGE_SIZE);
@@ -85,6 +98,7 @@ void Switch::handleManagerCommand(int read_fd_pipe) {
         this->ports[port]->output_pipe_fd = write_fd;
         this->ports[port]->status = ACTIVE;
 
+        printPortStatus(port);
         write(this->ports[port]->output_pipe_fd, "how are you today!", sizeof("how are you today!")); // testign the pipes
     }
 }
