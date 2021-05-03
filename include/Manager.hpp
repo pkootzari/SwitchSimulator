@@ -29,7 +29,8 @@ class Manager {
         std::vector<std::string> tokenizeInput(std::string input);
         void addSwitch(int numOfPorts, int id);
         void addSystem(int id);
-        void connect(int system_id, int switch_id, int port);
+        void connect_sy_sw(int system_id, int switch_id, int port);
+        void connect_sw_sw(int switch_id1, int port_id1, int switch_id2, int port_id2);
         int find_system_index(int id);
         int find_switch_index(int id);
         void ping(int from, int to);

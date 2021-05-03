@@ -6,7 +6,8 @@ using namespace std;
 
 constexpr char ADD_SYSTEM[] = "MySystem";
 constexpr char ADD_SWITCH[] = "MySwitch";
-constexpr char CONNECT[] = "connect";
+constexpr char CONNECT_SYSTEM_SWITCH[] = "connect_sy_sw";
+constexpr char CONNECT_SWITCH_SWITCH[] = "connect_sw_sw";
 constexpr char PING[] = "ping";
 
 void Manager::handleCommand() {
@@ -27,12 +28,19 @@ void Manager::handleCommand() {
                 continue;
             }
             addSwitch(stoi(arguments[1]), stoi(arguments[2]));
-        } else if(arguments[command_index] == CONNECT) {
+        } else if(arguments[command_index] == CONNECT_SYSTEM_SWITCH) {
             if(arguments.size() != 4) {
                 cout << "too few or too many arguments!\n";
                 continue;
             }
-            connect(stoi(arguments[1]), stoi(arguments[2]), stoi(arguments[3]));
+            connect_sy_sw(stoi(arguments[1]), stoi(arguments[2]), stoi(arguments[3]));
+        } else if(arguments[command_index] == CONNECT_SWITCH_SWITCH) {
+            // connect_sw_sw <switch_id1> <port_id1> <switch_id2> <port_id2>
+            if(arguments.size() != 5) {
+                cout << "too few or too many arguments!\n";
+                continue;
+            }
+            connect_sw_sw(stoi(arguments[1]), stoi(arguments[2]), stoi(arguments[3]), stoi(arguments[4]));   
         } else if(arguments[command_index] == PING) {
             if(arguments.size() != 3) {
                 cout << "too few or too many arguments!\n";
@@ -98,7 +106,7 @@ int Manager::find_switch_index(int id) {
     return -1;
 }
 
-void Manager::connect(int system_id, int switch_id, int port) {
+void Manager::connect_sy_sw(int system_id, int switch_id, int port) {
     if(find_system_index(system_id) == -1) {
         cout << "system doesn't exist!\n";
         return;
@@ -119,6 +127,25 @@ void Manager::connect(int system_id, int switch_id, int port) {
 
     write(systems[find_system_index(system_id)]->pipes[1], msg_to_system.c_str(), msg_to_switch.length()+1);
     write(switches[find_switch_index(switch_id)]->pipes[1], msg_to_switch.c_str(), msg_to_switch.length()+1);
+}
+
+void Manager::connect_sw_sw(int switch_id1, int port_id1, int switch_id2, int port_id2) {
+    if( (find_switch_index(switch_id1) == -1) || (find_switch_index(switch_id2) == -1) ) {
+        cout << "switch doesn't exist!\n";
+        return;
+    }
+    if( (switches[find_switch_index(switch_id1)]->sw->getNumOfPorts() <= port_id1) || (switches[find_switch_index(switch_id2)]->sw->getNumOfPorts() <= port_id2) ) {
+        cout << "this switch doesn't have a port with this number\n";
+        return;
+    }
+
+    string switch1_pipe = "switch" + to_string(switch_id1) + "/port" + to_string(port_id1);
+    string switch2_pipe = "switch" + to_string(switch_id2) + "/port" + to_string(port_id2);
+    string msg_to_switch1 = "connect " + to_string(port_id1) + " " + switch2_pipe;
+    string msg_to_switch2 = "connect " + to_string(port_id2) + " " + switch1_pipe;
+
+    write(switches[find_switch_index(switch_id1)]->pipes[1], msg_to_switch1.c_str(), msg_to_switch1.length()+1);
+    write(switches[find_switch_index(switch_id2)]->pipes[1], msg_to_switch2.c_str(), msg_to_switch2.length()+1);
 }
 
 void Manager::ping(int from, int to) {

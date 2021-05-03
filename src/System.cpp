@@ -62,6 +62,12 @@ void System::handleManagerCommand(int read_fd_pipe) {
     this->log << "for system " << id << " : " << massage << endl;
 
     vector<string> arguments = tokenizeInput(string(massage));
+    if( (this->write_to_switch == 0) && (arguments[0] != CONNECT ) ) {
+        cout << "system " << id << " is not connected to a swtich!\n";
+        return;
+    }
+
+    
     if(arguments[0] == CONNECT) {
         int write_fd = open(arguments[1].c_str(), O_WRONLY | O_NONBLOCK);
         if(write_fd < 0) {
@@ -85,7 +91,10 @@ void System::handleInputFrame(int input_pipe) {
     Frame incomming_frame = Frame(string(massage));
     this->log << "incoming frame for system " << id << " : " << massage << endl;
 
-    if(incomming_frame.getType() == MASSAGE && incomming_frame.getTo() == id) {
+    if(incomming_frame.getTo() != id)
+        return;
+
+    if(incomming_frame.getType() == MASSAGE) {
         Frame response = Frame(id, incomming_frame.getFrom(), MASSAGE_CNF, "pinging back");
         write(this->write_to_switch, response.toString().c_str(), response.toString().length()+1);
     }
