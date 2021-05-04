@@ -8,7 +8,7 @@ Frame::Frame(int from, int to, int type, string content) {
     this->from = from;
     this->to = to;
     this->type = type;
-    this->content = content;
+    this->content = content.substr(0, max_sizeof_content);
 }
 
 Frame::Frame(string massage) {
@@ -16,12 +16,11 @@ Frame::Frame(string massage) {
     if(arguments.size() < 4)
         cout << "Invalid frame type!\n";
 
-    this->from      = stoi(arguments[0]);
-    this->to        = stoi(arguments[1]);
-    this->type      = stoi(arguments[2]);
-    string in = arguments[3];
-    string out = in.substr(0, in.find('#'));
-    this->content   = out;
+    this->from      = stoi(massage.substr(0, 2));
+    this->to        = stoi(massage.substr(3, 2));
+    this->type      = stoi(massage.substr(6, 1));
+    string in = massage.substr(8);
+    this->content   = in.substr(0, in.find('~'));
 }
 
 vector<string> Frame::splitString(string s) {
@@ -59,7 +58,7 @@ string Frame::toString() {
     string type = to_string(this->type);
     string c = content;
     while(c.length()!= Frame::max_sizeof_content)
-        c += "#";
+        c += "~";
 
     return string(from + " " + to + " " + type + " " + c);
 }
@@ -73,22 +72,27 @@ vector<string> Frame::tokenizeInput(string input) {
 
 // int main(int argc, char const *argv[])
 // {
-//     ifstream ifs("Main.cpp");
-//     string content( (std::istreambuf_iterator<char>(ifs) ),
-//                        (std::istreambuf_iterator<char>()    ) );
-//     ifs.close();
+//     Frame f = Frame(2, 3, 4, "salam mamad joon halet\n chetore khobi aziz");
+//     cout << f.toString() << endl;
+//     Frame f2 = (f.toString());
+//     cout << f2.toString() << endl;
+//     cout << f2.getContent() << endl;
+//     // ifstream ifs("Main.cpp");
+//     // string content( (std::istreambuf_iterator<char>(ifs) ),
+//     //                    (std::istreambuf_iterator<char>()    ) );
+//     // ifs.close();
 
-//     vector<Frame> f= Frame::makeFramesFromMsg(content, 1, 10);
+//     // vector<Frame> f= Frame::makeFramesFromMsg(content, 1, 10);
 
-//     ofstream msgf("msg.txt");
-//     for(int i = 0; i < f.size(); i++)
-//         msgf << f[i].getContent();
-//     msgf.close();
+//     // ofstream msgf("msg.txt");
+//     // for(int i = 0; i < f.size(); i++)
+//     //     msgf << f[i].getContent();
+//     // msgf.close();
 
-//     ofstream logs("log.txt");
-//     for(int i = 0; i < f.size(); i++)
-//         logs << f[i].toString() << endl;
-//     logs.close();
+//     // ofstream logs("log.txt");
+//     // for(int i = 0; i < f.size(); i++)
+//     //     logs << f[i].toString() << endl;
+//     // logs.close();
 
 //     return 0;
 // }

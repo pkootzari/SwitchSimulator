@@ -9,6 +9,7 @@ constexpr char ADD_SWITCH[] = "MySwitch";
 constexpr char CONNECT_SYSTEM_SWITCH[] = "connect_sy_sw";
 constexpr char CONNECT_SWITCH_SWITCH[] = "connect_sw_sw";
 constexpr char PING[] = "ping";
+constexpr char REQUEST[] = "req";
 
 void Manager::handleCommand() {
     string command;
@@ -17,18 +18,21 @@ void Manager::handleCommand() {
         vector<string> arguments = tokenizeInput(command);
 
         if(arguments[command_index] == ADD_SYSTEM) {
+            // MySystem <id>
             if(arguments.size() != 2) {
                 cout << "too few or too many arguments!\n";
                 continue;
             }
             addSystem(stoi(arguments[1]));
         } else if(arguments[command_index] == ADD_SWITCH) {
+            // MySwitch <portnum> <id>
             if(arguments.size() != 3) {
                 cout << "too few or too many arguments!\n";
                 continue;
             }
             addSwitch(stoi(arguments[1]), stoi(arguments[2]));
         } else if(arguments[command_index] == CONNECT_SYSTEM_SWITCH) {
+            // connect_sy_sw <system_id> <switch_id> <port>
             if(arguments.size() != 4) {
                 cout << "too few or too many arguments!\n";
                 continue;
@@ -42,11 +46,19 @@ void Manager::handleCommand() {
             }
             connect_sw_sw(stoi(arguments[1]), stoi(arguments[2]), stoi(arguments[3]), stoi(arguments[4]));   
         } else if(arguments[command_index] == PING) {
+            // ping <system_id1> <system_id2>
             if(arguments.size() != 3) {
                 cout << "too few or too many arguments!\n";
                 continue;
             }
             ping(stoi(arguments[1]), stoi(arguments[2]));
+        } else if(arguments[command_index] == REQUEST) {
+            // request <from_systemid> <to_systemid> <filename>
+            if(arguments.size() != 4) {
+                cout << "too few or too many arguments!\n";
+                continue;
+            }
+            requestFile(stoi(arguments[1]), stoi(arguments[2]), arguments[3]);
         } else {
             cout << "Unknown command!" << endl;
         }
@@ -155,6 +167,16 @@ void Manager::ping(int from, int to) {
     }
 
     string command = "ping " + to_string(to);
+    write(systems[find_system_index(from)]->pipes[1], command.c_str(), command.length()+1);
+}
+
+void Manager::requestFile(int from, int to, string filename) {
+    if((find_system_index(from) == -1) || (find_system_index(to) == -1)) {
+        cout << "system with this id doesn't exists!\n";
+        return;
+    }
+
+    string command = "request " + to_string(to) + " " + filename;
     write(systems[find_system_index(from)]->pipes[1], command.c_str(), command.length()+1);
 }
 

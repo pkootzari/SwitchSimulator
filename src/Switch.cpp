@@ -80,18 +80,20 @@ void Switch::printPortStatus(int port) {
     this->log <<"\tstatus: " << STATUS[this->ports[port]->status] << endl;
     this->log <<"\tinput: " << this->ports[port]->input_pipe_fd << endl;
     this->log <<"\toutput: " << this->ports[port]->output_pipe_fd << endl;
+    this->log << endl;
 }
 
 void Switch::printLookuptable() {
     this->log << "Lookup Table:" << endl;
     for(auto it = lookup_table.begin(); it != lookup_table.end(); it++)
         this->log << "\t" << it->first << "\t" << it->second << endl;
+    this->log << endl;
 }
 
 void Switch::handleManagerCommand(int read_fd_pipe) {
     char massage[MASSAGE_SIZE];
     read(read_fd_pipe, massage, MASSAGE_SIZE);
-    this->log << "for switch " << id << " : " << massage << endl;
+    this->log << "incomming massage from manager: " << massage << endl << endl;
 
     vector<string> arguments = tokenizeInput(string(massage));
     if(arguments[0] == CONNECT) {
@@ -112,7 +114,7 @@ void Switch::handleInputFrame(int port_num, int pipe_fd) {
     char massage[MASSAGE_SIZE];
     read(pipe_fd, massage, MASSAGE_SIZE);
     Frame incomming_frame = Frame(string(massage));
-    this->log << "incoming frame for switch " << id << " : " << massage << endl;
+    this->log << "incoming frame: " << massage << endl << endl;
 
     int from_id = incomming_frame.getFrom();
     if(lookup_table.find(from_id) == lookup_table.end()) {  // the from_id not in lookup table

@@ -4,7 +4,7 @@ SRC_DIR = src
 INCLUDE_DIR = include
 CFLAGS = -std=c++11 -I$(INCLUDE_DIR)
 
-EXECUTABLE_FILE = switch.out
+EXECUTABLE_FILE = simulator.out
 
 OBJECTS = \
 	$(BUILD_DIR)/Main.o \

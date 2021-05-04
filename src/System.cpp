@@ -5,6 +5,7 @@ using namespace std;
 
 constexpr char CONNECT[] = "connect";
 constexpr char PING[] = "ping";
+constexpr char REQUEST[] = "request";
 
 
 System::System(int id) {
@@ -12,6 +13,7 @@ System::System(int id) {
     this->id = id;
     this->directory = "system" + to_string(id);
     this->write_to_switch = 0;
+    this->getting_file_from_id = -1;
 }
 
 int System::getID() { return id; }
@@ -59,7 +61,7 @@ void System::run(int read_fd_pipe) {
 void System::handleManagerCommand(int read_fd_pipe) {
     char massage[MASSAGE_SIZE];
     read(read_fd_pipe, massage, MASSAGE_SIZE);
-    this->log << "for system " << id << " : " << massage << endl;
+    this->log << "incoming massage from the manager: " << massage << endl << endl;
 
     vector<string> arguments = tokenizeInput(string(massage));
     if( (this->write_to_switch == 0) && (arguments[0] != CONNECT ) ) {
@@ -81,6 +83,11 @@ void System::handleManagerCommand(int read_fd_pipe) {
         int to_id = stoi(arguments[1]);
         Frame f = Frame(id, to_id, MASSAGE, "pinging");
         write(this->write_to_switch, f.toString().c_str(), f.toString().length()+1);
+    } else if(arguments[0] == REQUEST) {
+        int to_id = stoi(arguments[1]);
+        string filename = arguments[2];
+        Frame f = Frame(id, to_id, REQ, filename);
+        write(this->write_to_switch, f.toString().c_str(), f.toString().length()+1);
     }
 
 }
@@ -89,7 +96,7 @@ void System::handleInputFrame(int input_pipe) {
     char massage[MASSAGE_SIZE];
     read(input_pipe, massage, MASSAGE_SIZE);
     Frame incomming_frame = Frame(string(massage));
-    this->log << "incoming frame for system " << id << " : " << massage << endl;
+    this->log << "incoming frame: " << massage << endl << endl;
 
     if(incomming_frame.getTo() != id)
         return;
@@ -97,7 +104,45 @@ void System::handleInputFrame(int input_pipe) {
     if(incomming_frame.getType() == MASSAGE) {
         Frame response = Frame(id, incomming_frame.getFrom(), MASSAGE_CNF, "pinging back");
         write(this->write_to_switch, response.toString().c_str(), response.toString().length()+1);
+
+    } else if(incomming_frame.getType() == REQ) {
+        string filename = directory + "/" + incomming_frame.getContent();
+        ifstream file_content(filename);
+        if(file_content.is_open()) {
+            string content( (std::istreambuf_iterator<char>(file_content) ), (std::istreambuf_iterator<char>() )  );
+            vector<Frame> response = Frame::makeFramesFromMsg(content, id, incomming_frame.getFrom());
+            for(int i = 0; i < response.size(); i++)
+                write(this->write_to_switch, response[i].toString().c_str(), response[i].toString().length()+1);
+
+        } else {
+            Frame response = Frame(id, incomming_frame.getFrom(), FILE_E, "there is no such file!");
+            write(this->write_to_switch, response.toString().c_str(), response.toString().length()+1);
+        }
+        file_content.close();
+
+    } else if(incomming_frame.getType() == FILE_C) {
+        if(getting_file_from_id == -1) {
+            getting_file_from_id = incomming_frame.getFrom();
+            string recv_file_name = directory + "/" + FILE_NAME;
+            recv_file.open(recv_file_name, std::ios::out);
+        }
+
+        if(incomming_frame.getFrom() != getting_file_from_id) {
+            this->log << "incoming file frame from a different source!" << endl << endl;
+            return;
+        } else {
+            recv_file << incomming_frame.getContent();
+        }
+        
+
+    } else if(incomming_frame.getType() == FILE_E) {
+        getting_file_from_id = -1;
+        if(recv_file.is_open()) {
+            recv_file.close();
+            this->log << "end of file transfer!" << endl << endl;
+        }
     }
+
 }
 
 vector<string> System::tokenizeInput(string input) {

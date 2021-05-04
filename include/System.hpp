@@ -14,6 +14,8 @@
 #include <iterator>
 #include <vector>
 
+#define FILE_NAME "recv_file.txt";
+
 class System {
     private:
         int id;
@@ -21,6 +23,8 @@ class System {
         int input_pipe;
         int write_to_switch;
         int MASSAGE_SIZE;
+        int getting_file_from_id;
+        std::ofstream recv_file;
         std::ofstream log;
         void handleManagerCommand(int read_fd_pipe);
         void handleInputFrame(int input_pipe);

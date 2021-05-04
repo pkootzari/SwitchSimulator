@@ -34,6 +34,7 @@ class Manager {
         int find_system_index(int id);
         int find_switch_index(int id);
         void ping(int from, int to);
+        void requestFile(int from, int to, std::string filename);
     public:
         void handleCommand();
 };
