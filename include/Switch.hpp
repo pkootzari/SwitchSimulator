@@ -15,6 +15,8 @@
 #include <sstream>
 #include <iterator>
 
+class Frame;
+
 constexpr int DISCONNECTED = 0;
 constexpr int INACTIVE = 1;
 constexpr int ACTIVE  = 2;
@@ -29,16 +31,22 @@ typedef struct port {
     int output_pipe_fd;
 } Port;
 
+typedef struct STPinfo {
+    int root_id;
+    int distance_to_root;
+    int next_switch_to_root;
+    int port_to_root;
+} STPinfo;
+
 class Switch {
     private:
         int id;
         int numOfPorts;
         int MASSAGE_SIZE;
         std::ofstream log;
+        std::ofstream STPlog;
         std::string directory;
-        // std::vector<int> port_input_pipes;
-        // std::map<int, int> port_pipe_towrite;
-        // std::map<int, int> ports_status;
+        STPinfo* stp_info;
         std::map<int, Port*> ports;
         std::map<int, int> lookup_table;
         // fd_set readFDs;
@@ -48,6 +56,9 @@ class Switch {
         std::vector<std::string> tokenizeInput(std::string input);
         void printPortStatus(int port);
         void printLookuptable();
+        void handleSTPframe(Frame frame, int port_num);
+        std::string getSTPimpression();
+        void printSTPinfo();
     public:
         int getID();
         int getNumOfPorts();

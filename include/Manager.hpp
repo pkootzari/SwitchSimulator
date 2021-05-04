@@ -35,6 +35,7 @@ class Manager {
         int find_switch_index(int id);
         void ping(int from, int to);
         void requestFile(int from, int to, std::string filename);
+        void spanningTree();
     public:
         void handleCommand();
 };

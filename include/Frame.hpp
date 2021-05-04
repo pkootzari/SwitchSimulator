@@ -8,8 +8,6 @@
 #include <iterator>
 #include <fstream>
 
-const char POSTFIX = '~';
-
 constexpr int MASSAGE = 1;
 constexpr int MASSAGE_CNF = 2;
 constexpr int FILE_C = 3;

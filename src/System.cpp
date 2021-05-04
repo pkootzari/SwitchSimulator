@@ -71,6 +71,11 @@ void System::handleManagerCommand(int read_fd_pipe) {
 
     
     if(arguments[0] == CONNECT) {
+        if(this->write_to_switch != 0) {
+            cout << "system " << id << " already connected to a switch: connection failed" << endl;
+            return;
+        }
+
         int write_fd = open(arguments[1].c_str(), O_WRONLY | O_NONBLOCK);
         if(write_fd < 0) {
             cout << "system " << id << " can't open the pipe to write to!\n";
@@ -98,7 +103,7 @@ void System::handleInputFrame(int input_pipe) {
     Frame incomming_frame = Frame(string(massage));
     this->log << "incoming frame: " << massage << endl << endl;
 
-    if(incomming_frame.getTo() != id)
+    if(incomming_frame.getTo() != id || incomming_frame.getType() == STP)
         return;
 
     if(incomming_frame.getType() == MASSAGE) {
@@ -106,7 +111,7 @@ void System::handleInputFrame(int input_pipe) {
         write(this->write_to_switch, response.toString().c_str(), response.toString().length()+1);
 
     } else if(incomming_frame.getType() == REQ) {
-        string filename = directory + "/" + incomming_frame.getContent();
+        string filename = incomming_frame.getContent();
         ifstream file_content(filename);
         if(file_content.is_open()) {
             string content( (std::istreambuf_iterator<char>(file_content) ), (std::istreambuf_iterator<char>() )  );

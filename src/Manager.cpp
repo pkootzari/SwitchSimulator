@@ -10,6 +10,7 @@ constexpr char CONNECT_SYSTEM_SWITCH[] = "connect_sy_sw";
 constexpr char CONNECT_SWITCH_SWITCH[] = "connect_sw_sw";
 constexpr char PING[] = "ping";
 constexpr char REQUEST[] = "req";
+constexpr char SPANNING_TREE[] = "sptree";
 
 void Manager::handleCommand() {
     string command;
@@ -59,6 +60,13 @@ void Manager::handleCommand() {
                 continue;
             }
             requestFile(stoi(arguments[1]), stoi(arguments[2]), arguments[3]);
+        } else if(arguments[command_index] == SPANNING_TREE) {
+            // sptree
+            if(arguments.size() != 1) {
+                cout << "too few or too many arguments!\n";
+                continue;
+            }
+            spanningTree();
         } else {
             cout << "Unknown command!" << endl;
         }
@@ -131,7 +139,8 @@ void Manager::connect_sy_sw(int system_id, int switch_id, int port) {
         cout << "this switch doesn't have a port with this number\n";
         return;
     }
-    
+    cout << "connecting system " << system_id << " to switch " << switch_id << " from port " << port << " ..." << endl;
+
     string switch_pipe = "switch" + to_string(switch_id) + "/port" + to_string(port);
     string system_pipe = "system" + to_string(system_id) + "/input";
     string msg_to_system = "connect " + switch_pipe;
@@ -150,6 +159,7 @@ void Manager::connect_sw_sw(int switch_id1, int port_id1, int switch_id2, int po
         cout << "this switch doesn't have a port with this number\n";
         return;
     }
+    cout << "connecting switch " << switch_id1 << " from prot " << port_id1 << " to swtich " << switch_id2 << " from port " << port_id2 << " ..." << endl;
 
     string switch1_pipe = "switch" + to_string(switch_id1) + "/port" + to_string(port_id1);
     string switch2_pipe = "switch" + to_string(switch_id2) + "/port" + to_string(port_id2);
@@ -178,6 +188,13 @@ void Manager::requestFile(int from, int to, string filename) {
 
     string command = "request " + to_string(to) + " " + filename;
     write(systems[find_system_index(from)]->pipes[1], command.c_str(), command.length()+1);
+}
+
+void Manager::spanningTree() {
+    for(int i = 0; i < switches.size(); i++) {
+        string command = "spanning_tree";
+        write(switches[i]->pipes[1], command.c_str(), command.length()+1);
+    }
 }
 
 vector<string> Manager::tokenizeInput(string input) {

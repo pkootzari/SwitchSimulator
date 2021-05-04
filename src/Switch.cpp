@@ -4,6 +4,7 @@
 using namespace std;
 
 constexpr char CONNECT[] = "connect";
+constexpr char SPANNING_TREE[] = "spanning_tree";
 
 Switch::Switch(int numOfPorts, int id) {
     this->MASSAGE_SIZE = 59;
@@ -17,6 +18,11 @@ Switch::Switch(int numOfPorts, int id) {
         p->output_pipe_fd = -1;
         this->ports[i] = p;
     }
+    this->stp_info = new STPinfo;
+    this->stp_info->root_id = id;
+    this->stp_info->distance_to_root = 0;
+    this->stp_info->port_to_root = -1;
+    this->stp_info->next_switch_to_root = -1;
 }
 
 int Switch::getID() { return id; }
@@ -28,6 +34,10 @@ void Switch::initiatePipes() {
         cout << "Switch " << id << " can't make its directory!\n";
     
     this->log.open(directory+"/log.txt", std::ios_base::app);
+    this->STPlog.open("STPlog.txt", std::ios::app);
+    if(this->STPlog.is_open() == false) {
+        cout << "switch " << id << " can't open STPlog file!\n";
+    }
 
     for(int i = 0; i < numOfPorts; i++) {
         string pipe_name = directory + "/port" + to_string(i);
@@ -51,6 +61,8 @@ void Switch::run(int read_fd_pipe) {
         FD_ZERO(&inputs);
         FD_SET(read_fd_pipe, &inputs);
         for(int i = 0; i < numOfPorts; i++){
+            if(this->ports[i]->status != ACTIVE)
+                continue;
             FD_SET(this->ports[i]->input_pipe_fd, &inputs);
             if(this->ports[i]->input_pipe_fd > max_fd)
                 max_fd = this->ports[i]->input_pipe_fd;
@@ -90,6 +102,16 @@ void Switch::printLookuptable() {
     this->log << endl;
 }
 
+void Switch::printSTPinfo() {
+    this->log << "STP current info: " << endl;
+    this->log << "\tself_id: " << id << endl;
+    this->log << "\troot_id: " << stp_info->root_id << endl; 
+    this->log << "\tdistance_to_root: " << stp_info->distance_to_root << endl;
+    this->log << "\tnext_switch_to_root: " << stp_info->next_switch_to_root << endl; 
+    this->log << "\tport_to_root: " << stp_info->port_to_root << endl;
+    this->log << endl;
+}
+
 void Switch::handleManagerCommand(int read_fd_pipe) {
     char massage[MASSAGE_SIZE];
     read(read_fd_pipe, massage, MASSAGE_SIZE);
@@ -98,6 +120,11 @@ void Switch::handleManagerCommand(int read_fd_pipe) {
     vector<string> arguments = tokenizeInput(string(massage));
     if(arguments[0] == CONNECT) {
         int port = stoi(arguments[1]);
+        if(this->ports[port]->status == ACTIVE) {
+            cout << "port " << port << " of switch " << id << " is already connected: connection failed!" << endl;
+            return;
+        }
+
         int write_fd = open(arguments[2].c_str(), O_WRONLY | O_NONBLOCK);
         if(write_fd < 0) {
             cout << "switch " << id << " can't open pipe to write to!\n";
@@ -107,14 +134,34 @@ void Switch::handleManagerCommand(int read_fd_pipe) {
         this->ports[port]->status = ACTIVE;
 
         printPortStatus(port);
+
+    } else if(arguments[0] == SPANNING_TREE) {
+        this->STPlog << "initiating the spannig tree algorithem for swtich " << id << endl;
+        string content = getSTPimpression();
+        Frame f = Frame(0, 0, STP, content);
+        printSTPinfo();
+        for(int i = 0; i < numOfPorts; i++) {
+            if(this->ports[i]->status == ACTIVE)
+                write(this->ports[i]->output_pipe_fd, f.toString().c_str(), f.toString().length()+1);
+        }
     }
+}
+
+string Switch::getSTPimpression() {
+    string content = to_string(this->id) + " " + to_string(this->stp_info->root_id) + " " + to_string(this->stp_info->distance_to_root);
+    return content;
 }
 
 void Switch::handleInputFrame(int port_num, int pipe_fd) {
     char massage[MASSAGE_SIZE];
     read(pipe_fd, massage, MASSAGE_SIZE);
     Frame incomming_frame = Frame(string(massage));
-    this->log << "incoming frame: " << massage << endl << endl;
+    this->log << "incoming frame from port " << port_num << " : " << massage << endl << endl;
+
+    if(incomming_frame.getType() == STP) {
+        handleSTPframe(incomming_frame, port_num);
+        return;
+    }
 
     int from_id = incomming_frame.getFrom();
     if(lookup_table.find(from_id) == lookup_table.end()) {  // the from_id not in lookup table
@@ -133,6 +180,67 @@ void Switch::handleInputFrame(int port_num, int pipe_fd) {
         int port = lookup_table.find(to_id)->second;
         if(this->ports[port]->status == ACTIVE)
             write(this->ports[port]->output_pipe_fd, massage, MASSAGE_SIZE);
+    }
+}
+
+void Switch::handleSTPframe(Frame frame, int port_num) {
+    vector<string> args = tokenizeInput(frame.getContent());
+    int source_id = stoi(args[0]);
+    int source_root_id = stoi(args[1]);
+    int source_distance_from_root = stoi(args[2]);
+
+    bool impression_changed = false;
+    if(source_root_id < stp_info->root_id) {
+        impression_changed = true;
+        stp_info->root_id = source_root_id;
+        stp_info->distance_to_root = source_distance_from_root + 1;
+        stp_info->next_switch_to_root = source_id;
+        stp_info->port_to_root = port_num;
+
+    } else if(source_root_id == stp_info->root_id) {
+        int my_new_distance = source_distance_from_root + 1;
+
+        if(my_new_distance < stp_info->distance_to_root) {
+            impression_changed = true;
+            stp_info->distance_to_root = my_new_distance;
+            stp_info->next_switch_to_root = source_id;
+            int last_port_to_root = stp_info->port_to_root;
+            this->ports[last_port_to_root]->status = INACTIVE;
+            printPortStatus(last_port_to_root);
+            this->STPlog << "switch " << id << " diactivate port " << last_port_to_root << endl;
+            stp_info->port_to_root = port_num;
+
+        } else if(my_new_distance == stp_info->distance_to_root) {
+            if(source_id < stp_info->next_switch_to_root) {
+                impression_changed = true;
+                stp_info->next_switch_to_root = source_id;
+                int last_port_to_root = stp_info->port_to_root;
+                this->ports[last_port_to_root]->status = INACTIVE;
+                printPortStatus(last_port_to_root);
+                this->STPlog << "switch " << id << " diactivate port " << last_port_to_root << endl;
+                stp_info->port_to_root = port_num;
+
+            } else {
+                this->ports[port_num]->status = INACTIVE;
+                printPortStatus(port_num);
+                this->STPlog << "switch " << id << " diactivate port " << port_num << endl;
+            } 
+
+        } else if(source_distance_from_root == stp_info->distance_to_root) {
+            this->ports[port_num]->status = INACTIVE;
+            printPortStatus(port_num);
+            this->STPlog << "switch " << id << " diactivate port " << port_num << endl;
+        }
+    }
+
+    if(impression_changed) {
+        string content = getSTPimpression();
+        Frame f = Frame(0, 0, STP, content);
+        printSTPinfo();
+        for(int i = 0; i < numOfPorts; i++) {
+            if(this->ports[i]->status == ACTIVE && i != port_num)
+                write(this->ports[i]->output_pipe_fd, f.toString().c_str(), f.toString().length()+1);
+        }
     }
 }
 

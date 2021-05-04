@@ -62,8 +62,8 @@ $(EXECUTABLE_FILE): $(OBJECTS)
 
 .PHONY: clean
 clean:
-	rm -rf $(BUILD_DIR) *.o *.out  system* switch*
+	rm -rf $(BUILD_DIR) *.o *.out  system* switch* STPlog.txt
 
 .PHONY: cleandir
 cleandir:
-	rm -rf system* switch*
+	rm -rf system* switch* STPlog.txt
