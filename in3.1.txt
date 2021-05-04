@@ -18,3 +18,10 @@ MySystem 1
 connect_sy_sw 1 3 0
 MySystem 2
 connect_sy_sw 2 4 0
+MySystem 3
+connect_sy_sw 3 6 0
+MySystem 4
+connect_sy_sw 4 5 0
+sptree
+req 1 2 in2.txt
+req 3 4 src/Main.cpp

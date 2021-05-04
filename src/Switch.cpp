@@ -188,49 +188,25 @@ void Switch::handleSTPframe(Frame frame, int port_num) {
     int source_id = stoi(args[0]);
     int source_root_id = stoi(args[1]);
     int source_distance_from_root = stoi(args[2]);
+    int new_distance = source_distance_from_root + 1;
+
+    if(source_root_id > stp_info->root_id)
+        return;
 
     bool impression_changed = false;
-    if(source_root_id < stp_info->root_id) {
+    if(source_root_id < stp_info->root_id || 
+       ( (source_root_id == stp_info->root_id) && (new_distance < stp_info->distance_to_root) ) ) {
         impression_changed = true;
         stp_info->root_id = source_root_id;
-        stp_info->distance_to_root = source_distance_from_root + 1;
+        stp_info->distance_to_root = new_distance;
         stp_info->next_switch_to_root = source_id;
         stp_info->port_to_root = port_num;
 
-    } else if(source_root_id == stp_info->root_id) {
-        int my_new_distance = source_distance_from_root + 1;
-
-        if(my_new_distance < stp_info->distance_to_root) {
-            impression_changed = true;
-            stp_info->distance_to_root = my_new_distance;
-            stp_info->next_switch_to_root = source_id;
-            int last_port_to_root = stp_info->port_to_root;
-            this->ports[last_port_to_root]->status = INACTIVE;
-            printPortStatus(last_port_to_root);
-            this->STPlog << "switch " << id << " diactivate port " << last_port_to_root << endl;
-            stp_info->port_to_root = port_num;
-
-        } else if(my_new_distance == stp_info->distance_to_root) {
-            if(source_id < stp_info->next_switch_to_root) {
-                impression_changed = true;
-                stp_info->next_switch_to_root = source_id;
-                int last_port_to_root = stp_info->port_to_root;
-                this->ports[last_port_to_root]->status = INACTIVE;
-                printPortStatus(last_port_to_root);
-                this->STPlog << "switch " << id << " diactivate port " << last_port_to_root << endl;
-                stp_info->port_to_root = port_num;
-
-            } else {
-                this->ports[port_num]->status = INACTIVE;
-                printPortStatus(port_num);
-                this->STPlog << "switch " << id << " diactivate port " << port_num << endl;
-            } 
-
-        } else if(source_distance_from_root == stp_info->distance_to_root) {
-            this->ports[port_num]->status = INACTIVE;
-            printPortStatus(port_num);
-            this->STPlog << "switch " << id << " diactivate port " << port_num << endl;
-        }
+    } else if( (source_distance_from_root < stp_info->distance_to_root) || 
+               ( (source_distance_from_root == stp_info->distance_to_root) && (source_id < id) ) ) {
+        this->ports[port_num]->status = INACTIVE;
+        printPortStatus(port_num);
+        this->STPlog << "switch " << id << " diactivate port " << port_num << endl;
     }
 
     if(impression_changed) {

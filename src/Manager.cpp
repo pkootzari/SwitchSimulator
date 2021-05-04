@@ -139,7 +139,7 @@ void Manager::connect_sy_sw(int system_id, int switch_id, int port) {
         cout << "this switch doesn't have a port with this number\n";
         return;
     }
-    cout << "connecting system " << system_id << " to switch " << switch_id << " from port " << port << " ..." << endl;
+    cout << "connecting system " << system_id << " to switch " << switch_id << " from port " << port << endl;
 
     string switch_pipe = "switch" + to_string(switch_id) + "/port" + to_string(port);
     string system_pipe = "system" + to_string(system_id) + "/input";
@@ -159,7 +159,7 @@ void Manager::connect_sw_sw(int switch_id1, int port_id1, int switch_id2, int po
         cout << "this switch doesn't have a port with this number\n";
         return;
     }
-    cout << "connecting switch " << switch_id1 << " from prot " << port_id1 << " to swtich " << switch_id2 << " from port " << port_id2 << " ..." << endl;
+    cout << "connecting switch " << switch_id1 << " from prot " << port_id1 << " to swtich " << switch_id2 << " from port " << port_id2 << endl;
 
     string switch1_pipe = "switch" + to_string(switch_id1) + "/port" + to_string(port_id1);
     string switch2_pipe = "switch" + to_string(switch_id2) + "/port" + to_string(port_id2);
@@ -175,6 +175,7 @@ void Manager::ping(int from, int to) {
         cout << "system with this id doesn't exists!\n";
         return;
     }
+    cout << "pinging!" << endl;
 
     string command = "ping " + to_string(to);
     write(systems[find_system_index(from)]->pipes[1], command.c_str(), command.length()+1);
@@ -185,12 +186,14 @@ void Manager::requestFile(int from, int to, string filename) {
         cout << "system with this id doesn't exists!\n";
         return;
     }
+    cout << "requesting!" << endl;
 
     string command = "request " + to_string(to) + " " + filename;
     write(systems[find_system_index(from)]->pipes[1], command.c_str(), command.length()+1);
 }
 
 void Manager::spanningTree() {
+    cout << "sending signal to all the swithces!" << endl;
     for(int i = 0; i < switches.size(); i++) {
         string command = "spanning_tree";
         write(switches[i]->pipes[1], command.c_str(), command.length()+1);
