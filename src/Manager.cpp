@@ -4,10 +4,10 @@
 
 using namespace std;
 
-constexpr char ADD_SYSTEM[] = "MySystem";
-constexpr char ADD_SWITCH[] = "MySwitch";
-constexpr char CONNECT_SYSTEM_SWITCH[] = "connect_sy_sw";
-constexpr char CONNECT_SWITCH_SWITCH[] = "connect_sw_sw";
+constexpr char ADD_SYSTEM[] = "add_system";
+constexpr char ADD_SWITCH[] = "add_switch";
+constexpr char CONNECT_SYSTEM_SWITCH[] = "connect";
+constexpr char CONNECT_SWITCH_SWITCH[] = "connect_switches";
 constexpr char PING[] = "ping";
 constexpr char REQUEST[] = "req";
 constexpr char SPANNING_TREE[] = "sptree";
